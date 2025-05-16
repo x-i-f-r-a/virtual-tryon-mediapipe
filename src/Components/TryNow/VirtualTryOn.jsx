@@ -318,13 +318,13 @@ const VirtualTryOn = ({ category, image }) => {
 
               // Draw the back side polygon to *exclude* that area
               // This polygon covers the back part to be clipped out
-              ctx.moveTo(ringWidth / 2, 0);
-              ctx.lineTo(ringWidth * 5, ringHeight * 3);
-              ctx.lineTo(-ringWidth * 5, ringHeight * 3);
-              ctx.lineTo(-ringWidth / 2, 0);
+              // ctx.moveTo(ringWidth / 2, 0);
+              // ctx.lineTo(ringWidth * 0.55, 1);
+              // ctx.lineTo(-ringWidth * 0.55, 1);
+              // ctx.lineTo(-ringWidth / 2, 0);
 
-              // Use the 'evenodd' fill rule to clip everything except the polygon area
-              ctx.clip("evenodd");
+              // // Use the 'evenodd' fill rule to clip everything except the polygon area
+              // ctx.clip("evenodd");
 
               // Draw the ring image
               ctx.drawImage(
@@ -355,7 +355,7 @@ const VirtualTryOn = ({ category, image }) => {
                 wristLeft.y - wristRight.y
               );
 
-              const bangleWidth = wristWidth * 1.2; // slightly wider for realistic fit
+              const bangleWidth = wristWidth * 1.2; // slightly wider 
               const bangleHeight = bangleWidth * 0.5;
 
               ctx.save();
@@ -405,30 +405,46 @@ const VirtualTryOn = ({ category, image }) => {
 
             const leftEar = toPixel(face[234], w, h);
             const rightEar = toPixel(face[454], w, h);
+            const nose = toPixel(face[1], w, h);
+
+            const earDistance = rightEar.x - leftEar.x;
+            const centerX = (leftEar.x + rightEar.x) / 2;
+            const yaw = (nose.x - centerX) / earDistance;
+
+            // If yaw > 0.3, head is turned to the left
+            // If yaw < -0.3, head is turned to the right 
+            const isLeftEarVisible = yaw < 0.3;
+            const isRightEarVisible = yaw > -0.3;
+
             const size = 40;
 
             const offsetX = 4;
             const offsetY = 12;
 
-            drawHalfImage({
-              ctx,
-              image: overlayImage,
-              side: "left",
-              targetX: leftEar.x - size / 2 + offsetX,
-              targetY: leftEar.y - size / 2 + offsetY,
-              targetWidth: size,
-              targetHeight: size,
-            });
+            if (isLeftEarVisible) {
+              drawHalfImage({
+                ctx,
+                image: overlayImage,
+                side: "right",
+                targetX: rightEar.x - size / 2 - offsetX,
+                targetY: rightEar.y - size / 2 + offsetY,
+                targetWidth: size,
+                targetHeight: size,
+              });
+            }
 
-            drawHalfImage({
-              ctx,
-              image: overlayImage,
-              side: "right",
-              targetX: rightEar.x - size / 2 - offsetX,
-              targetY: rightEar.y - size / 2 + offsetY,
-              targetWidth: size,
-              targetHeight: size,
-            });
+            if (isRightEarVisible) {
+              drawHalfImage({
+                ctx,
+                image: overlayImage,
+                side: "left",
+                targetX: leftEar.x - size / 2 + offsetX,
+                targetY: leftEar.y - size / 2 + offsetY,
+                targetWidth: size,
+                targetHeight: size,
+              });
+              
+            }
           }
 
           animationFrameId = requestAnimationFrame(render);
