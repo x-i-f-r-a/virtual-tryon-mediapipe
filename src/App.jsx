@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import Header from "./components/Header/Header";
-import Bestsellers from "./pages/Bestsellers";
+import Header from "./Components/Header/Header";
+import Bestsellers from "./Pages/Bestsellers";
 import ProductDetails from "./Pages/ProductDetails";
 import ProductList from "./Components/productList/productList";
 import Footer from "./Components/Footer/footer";
