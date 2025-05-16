@@ -373,28 +373,28 @@ const VirtualTryOn = ({ category, image }) => {
 
           // === PENDANT ===
           if (
-  (category?.includes("necklace") || category?.includes("necklaces")) &&
-  faceResults?.faceLandmarks?.length > 0
-) {
-  const face = faceResults.faceLandmarks[0];
-  const chin = toPixel(face[152], w, h); // Chin in pixels
-  const leftEar = toPixel(face[234], w, h);
-  const rightEar = toPixel(face[454], w, h);
+            (category?.includes("necklace") ||
+              category?.includes("necklaces")) &&
+            faceResults?.faceLandmarks?.length > 0
+          ) {
+            const face = faceResults.faceLandmarks[0];
+            const chin = toPixel(face[152], w, h); // Chin in pixels
+            const leftEar = toPixel(face[234], w, h);
+            const rightEar = toPixel(face[454], w, h);
 
-  let faceWidth = Math.abs(leftEar.x - rightEar.x);
-  let pendantWidth = faceWidth * 0.8;
-  pendantWidth = Math.max(pendantWidth, 80); // Ensure visibility
-  const pendantHeight = pendantWidth;
+            let faceWidth = Math.abs(leftEar.x - rightEar.x);
+            let pendantWidth = faceWidth * 0.8;
+            pendantWidth = Math.max(pendantWidth, 80); // Ensure visibility
+            const pendantHeight = pendantWidth;
 
-  ctx.drawImage(
-    overlayImage,
-    chin.x - pendantWidth / 2,
-    chin.y + pendantHeight * 0.2,
-    pendantWidth,
-    pendantHeight
-  );
-}
-
+            ctx.drawImage(
+              overlayImage,
+              chin.x - pendantWidth / 2,
+              chin.y + pendantHeight * 0.2,
+              pendantWidth,
+              pendantHeight
+            );
+          }
 
           // === EARRING ===
           if (
