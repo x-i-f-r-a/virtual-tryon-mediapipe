@@ -46,6 +46,53 @@ const VirtualTryOn = ({ category, image }) => {
     );
   }
 
+  const getImageRotationAngle = (image) => {
+    // Create an off-screen canvas to analyze the image
+    const tempCanvas = document.createElement("canvas");
+    const ctx = tempCanvas.getContext("2d");
+
+    tempCanvas.width = image.width;
+    tempCanvas.height = image.height;
+    ctx.drawImage(image, 0, 0);
+
+    const imageData = ctx.getImageData(0, 0, image.width, image.height);
+    const data = imageData.data;
+
+    // Get all non-white pixels
+    const points = [];
+    for (let y = 0; y < image.height; y++) {
+      for (let x = 0; x < image.width; x++) {
+        const i = (y * image.width + x) * 4;
+        const r = data[i],
+          g = data[i + 1],
+          b = data[i + 2];
+
+        // Treat near-white as background
+        if (r < 250 || g < 250 || b < 250) {
+          points.push([x, y]);
+        }
+      }
+    }
+
+    if (points.length < 5) return 0; // Not enough points to analyze
+
+    // Perform PCA (Principal Component Analysis) to detect main orientation
+    const meanX = points.reduce((sum, p) => sum + p[0], 0) / points.length;
+    const meanY = points.reduce((sum, p) => sum + p[1], 0) / points.length;
+
+    let num = 0,
+      den = 0;
+    for (const [x, y] of points) {
+      const dx = x - meanX;
+      const dy = y - meanY;
+      num += dx * dy;
+      den += dx * dx - dy * dy;
+    }
+
+    const angle = 0.5 * Math.atan2(2 * num, den); // In radians
+    return angle;
+  };
+
   useEffect(() => {
     const loadImage = (src, ref) => {
       const img = new Image();
@@ -250,13 +297,36 @@ const VirtualTryOn = ({ category, image }) => {
               const ringWidth = fingerWidth * 1.4;
               const ringHeight = ringWidth * 0.6;
 
+              const angleOffset = getImageRotationAngle(overlayImage); // should be cached after image loads
+
               ctx.save();
               ctx.translate(centerX, centerY);
-              ctx.rotate(angle);
+              ctx.rotate(angle - angleOffset);
 
               ctx.beginPath();
-            ctx.ellipse(0, 0, ringWidth / 2, ringHeight / 2, 0, 0, Math.PI);
-            ctx.clip();
+
+              // Draw the full ellipse (ring)
+              ctx.ellipse(
+                0,
+                0,
+                ringWidth / 2,
+                ringHeight / 2,
+                0,
+                0,
+                2 * Math.PI
+              );
+
+              // Draw the back side polygon to *exclude* that area
+              // This polygon covers the back part to be clipped out
+              ctx.moveTo(ringWidth / 2, 0);
+              ctx.lineTo(ringWidth * 5, ringHeight * 3);
+              ctx.lineTo(-ringWidth * 5, ringHeight * 3);
+              ctx.lineTo(-ringWidth / 2, 0);
+
+              // Use the 'evenodd' fill rule to clip everything except the polygon area
+              ctx.clip("evenodd");
+
+              // Draw the ring image
               ctx.drawImage(
                 overlayImage,
                 -ringWidth / 2,
@@ -264,6 +334,7 @@ const VirtualTryOn = ({ category, image }) => {
                 ringWidth,
                 ringHeight
               );
+
               ctx.restore();
             }
           }
@@ -275,11 +346,20 @@ const VirtualTryOn = ({ category, image }) => {
             handResults?.landmarks?.length > 0
           ) {
             for (const landmarks of handResults.landmarks) {
-              const wrist = toPixel(landmarks[0], w, h);
-              const bangleWidth = 80;
-              const bangleHeight = 40;
+              const wristCenter = toPixel(landmarks[0], w, h);
+              const wristLeft = toPixel(landmarks[5], w, h); // base of index finger
+              const wristRight = toPixel(landmarks[17], w, h); // base of pinky finger
+
+              const wristWidth = Math.hypot(
+                wristLeft.x - wristRight.x,
+                wristLeft.y - wristRight.y
+              );
+
+              const bangleWidth = wristWidth * 1.2; // slightly wider for realistic fit
+              const bangleHeight = bangleWidth * 0.5;
+
               ctx.save();
-              ctx.translate(wrist.x, wrist.y);
+              ctx.translate(wristCenter.x, wristCenter.y);
               ctx.drawImage(
                 overlayImage,
                 -bangleWidth / 2,
@@ -293,22 +373,28 @@ const VirtualTryOn = ({ category, image }) => {
 
           // === PENDANT ===
           if (
-            (category?.includes("necklace") ||
-              category?.includes("necklaces")) &&
-            faceResults?.faceLandmarks?.length > 0
-          ) {
-            const face = faceResults.faceLandmarks[0];
-            const chin = toPixel(face[152], w, h); // Chin landmark
-            const pendantWidth = 100;
-            const pendantHeight = 100;
-            ctx.drawImage(
-              overlayImage,
-              chin.x - pendantWidth / 2,
-              chin.y + 10,
-              pendantWidth,
-              pendantHeight
-            );
-          }
+  (category?.includes("necklace") || category?.includes("necklaces")) &&
+  faceResults?.faceLandmarks?.length > 0
+) {
+  const face = faceResults.faceLandmarks[0];
+  const chin = toPixel(face[152], w, h); // Chin in pixels
+  const leftEar = toPixel(face[234], w, h);
+  const rightEar = toPixel(face[454], w, h);
+
+  let faceWidth = Math.abs(leftEar.x - rightEar.x);
+  let pendantWidth = faceWidth * 0.8;
+  pendantWidth = Math.max(pendantWidth, 80); // Ensure visibility
+  const pendantHeight = pendantWidth;
+
+  ctx.drawImage(
+    overlayImage,
+    chin.x - pendantWidth / 2,
+    chin.y + pendantHeight * 0.2,
+    pendantWidth,
+    pendantHeight
+  );
+}
+
 
           // === EARRING ===
           if (
@@ -370,8 +456,13 @@ const VirtualTryOn = ({ category, image }) => {
   }, [category]);
 
   return (
-    <div style={{ margin: "0 auto", padding: "10px"}}>
-      {isLoading && <p className="flex flex-row gap-2 items-center text-pink-700 text-center p-1 my-1 bg-pink-100 rounded-md"><FaSpinner className="animate-spin text-pink-600"/>Loading...</p>}
+    <div style={{ margin: "0 auto", padding: "10px" }}>
+      {isLoading && (
+        <p className="flex flex-row gap-2 items-center text-pink-700 text-center p-1 my-1 bg-pink-100 rounded-md">
+          <FaSpinner className="animate-spin text-pink-600" />
+          Loading...
+        </p>
+      )}
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       <div
@@ -379,8 +470,8 @@ const VirtualTryOn = ({ category, image }) => {
           position: "relative",
           paddingTop: "56.25%",
           backgroundColor: "#000",
-          minHeight: "300px", 
-          width: "100%"
+          minHeight: "300px",
+          width: "100%",
         }}
       >
         <video
