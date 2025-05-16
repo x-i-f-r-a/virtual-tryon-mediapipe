@@ -4,7 +4,7 @@ import Header from "./Components/Header/Header";
 import Bestsellers from "./Pages/Bestsellers";
 import ProductDetails from "./Pages/ProductDetails";
 import ProductList from "./Components/ProductList/ProductList";
-import Footer from "./Components/Footer/footer";
+import Footer from "./Components/Footer/Footer";
 
 const App = () => {
   return (
