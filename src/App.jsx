@@ -9,7 +9,8 @@ import Footer from "./Components/Footer/Footer";
 const App = () => {
   return (
     <BrowserRouter>
-      <div>
+      <div className="min-h-screen w-screen overflow-x-hidden overflow-y-auto flex flex-col">
+
         <Header />
         <Routes>
           <Route path="/" element={<Bestsellers />} />
