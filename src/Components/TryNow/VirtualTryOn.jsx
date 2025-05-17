@@ -3,6 +3,7 @@ import {
   FilesetResolver,
   HandLandmarker,
   FaceLandmarker,
+  PoseLandmarker,
 } from "@mediapipe/tasks-vision";
 import { FaSpinner } from "react-icons/fa";
 
@@ -13,6 +14,7 @@ const VirtualTryOn = ({ category, image }) => {
 
   const handLandmarkerRef = useRef(null);
   const faceLandmarkerRef = useRef(null);
+  const poseLandmarkerRef = useRef(null);
 
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -178,6 +180,19 @@ const VirtualTryOn = ({ category, image }) => {
           }
         );
 
+        poseLandmarkerRef.current = await PoseLandmarker.createFromOptions(
+          vision,
+          {
+            baseOptions: {
+              modelAssetPath: "/model/pose_landmarker_full.task",
+              delegate: "GPU",
+            },
+            runningMode: "VIDEO",
+            minPoseDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5,
+          }
+        );
+
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 640, height: 480, facingMode: "user" },
           audio: false,
@@ -232,6 +247,7 @@ const VirtualTryOn = ({ category, image }) => {
 
           let handResults = null;
           let faceResults = null;
+          let poseResults = null;
 
           try {
             if (handLandmarkerRef.current) {
@@ -243,6 +259,13 @@ const VirtualTryOn = ({ category, image }) => {
 
             if (faceLandmarkerRef.current) {
               faceResults = await faceLandmarkerRef.current.detectForVideo(
+                video,
+                timestamp
+              );
+            }
+
+            if (poseLandmarkerRef.current) {
+              poseResults = await poseLandmarkerRef.current.detectForVideo(
                 video,
                 timestamp
               );
@@ -355,7 +378,7 @@ const VirtualTryOn = ({ category, image }) => {
                 wristLeft.y - wristRight.y
               );
 
-              const bangleWidth = wristWidth * 1.2; // slightly wider 
+              const bangleWidth = wristWidth * 1.2; // slightly wider
               const bangleHeight = bangleWidth * 0.5;
 
               ctx.save();
@@ -371,28 +394,45 @@ const VirtualTryOn = ({ category, image }) => {
             }
           }
 
-          // === PENDANT ===
+          // === NECKLACE ===
           if (
             (category?.includes("necklace") ||
               category?.includes("necklaces")) &&
-            faceResults?.faceLandmarks?.length > 0
+            poseResults?.landmarks?.length > 0
           ) {
-            const face = faceResults.faceLandmarks[0];
-            const chin = toPixel(face[152], w, h); // Chin in pixels
-            const leftEar = toPixel(face[234], w, h);
-            const rightEar = toPixel(face[454], w, h);
+            const pose = poseResults.landmarks[0];
 
-            let faceWidth = Math.abs(leftEar.x - rightEar.x);
-            let pendantWidth = faceWidth * 0.8;
-            pendantWidth = Math.max(pendantWidth, 80); // Ensure visibility
-            const pendantHeight = pendantWidth;
+            // Landmarks indices from MediaPipe Pose:
+            const leftShoulder = pose[11];
+            const rightShoulder = pose[12];
+
+            // Convert normalized landmarks to pixel coordinates
+            const left = toPixel(leftShoulder, w, h);
+            const right = toPixel(rightShoulder, w, h);
+
+            // Calculate center point between shoulders
+            const centerX = (left.x + right.x) / 2;
+            const centerY = (left.y + right.y) / 2;
+
+            // Calculate shoulder width
+            const shoulderWidth = Math.hypot(
+              right.x - left.x,
+              right.y - left.y
+            );
+
+            // Necklace size relative to shoulder width
+            const necklaceWidth = shoulderWidth * 0.7;
+            const necklaceHeight = necklaceWidth * 0.5;
+
+            // Adjust vertical position to move necklace up by 15% of shoulderWidth
+            const offsetY = shoulderWidth * 0.2;
 
             ctx.drawImage(
               overlayImage,
-              chin.x - pendantWidth / 2,
-              chin.y + pendantHeight * 0.2,
-              pendantWidth,
-              pendantHeight
+              centerX - necklaceWidth / 2,
+              centerY - offsetY, // shifted up
+              necklaceWidth,
+              necklaceHeight
             );
           }
 
@@ -412,7 +452,7 @@ const VirtualTryOn = ({ category, image }) => {
             const yaw = (nose.x - centerX) / earDistance;
 
             // If yaw > 0.3, head is turned to the left
-            // If yaw < -0.3, head is turned to the right 
+            // If yaw < -0.3, head is turned to the right
             const isLeftEarVisible = yaw < 0.3;
             const isRightEarVisible = yaw > -0.3;
 
@@ -443,7 +483,6 @@ const VirtualTryOn = ({ category, image }) => {
                 targetWidth: size,
                 targetHeight: size,
               });
-              
             }
           }
 
