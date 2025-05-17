@@ -6,7 +6,7 @@ const TryNow = ({ onClose, category, image }) => {
 
   var category = category.toLowerCase()
   useEffect(() => {
-    console.log(category);
+    console.log(image);
     
     setIsStreaming(true);
   }, [category]); // Dependency on category to re-trigger the effect when it changes

@@ -5,7 +5,7 @@ import {
   FaceLandmarker,
   PoseLandmarker,
 } from "@mediapipe/tasks-vision";
-import {getImageRotationAngle, drawHalfImage } from "../../utils/util"
+import { getImageRotationAngle } from "../../utils/util";
 import { FaSpinner } from "react-icons/fa";
 
 const VirtualTryOn = ({ category, image }) => {
@@ -19,8 +19,6 @@ const VirtualTryOn = ({ category, image }) => {
 
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
-
 
   useEffect(() => {
     const loadImage = (src, ref) => {
@@ -389,27 +387,23 @@ const VirtualTryOn = ({ category, image }) => {
             const offsetY = 25;
 
             if (isLeftEarVisible) {
-              drawHalfImage({
-                ctx,
-                image: overlayImage,
-                side: "right",
-                targetX: rightEar.x - size / 2 - offsetX,
-                targetY: rightEar.y - size / 2 + offsetY,
-                targetWidth: size,
-                targetHeight: size,
-              });
+              ctx.drawImage(
+                overlayImage,
+                rightEar.x - size / 2 - offsetX,
+                rightEar.y - size / 2 + offsetY,
+                size,
+                size
+              );
             }
 
             if (isRightEarVisible) {
-              drawHalfImage({
-                ctx,
-                image: overlayImage,
-                side: "left",
-                targetX: leftEar.x - size / 2 + offsetX,
-                targetY: leftEar.y - size / 2 + offsetY,
-                targetWidth: size,
-                targetHeight: size,
-              });
+              ctx.drawImage(
+                overlayImage,
+                leftEar.x - size / 2 + offsetX,
+                leftEar.y - size / 2 + offsetY,
+                size,
+                size
+              );
             }
           }
 

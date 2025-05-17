@@ -22,12 +22,10 @@ export const products = [
   {
     id: 2,
     images: [
-      "/assets/DaarioPlatinumBandForRing.jpg",
-      "/assets/DaarioPlatinumBandForRing.jpg",
-      "/assets/DaarioPlatinumBandForRing.jpg",
-      "/assets/DaarioPlatinumBandForRing.jpg"
+      "/assets/ring1.png",
+      
     ],
-    tryNowImage: "/assets/DaarioPlatinumPng.png",
+    tryNowImage: "/assets/ring1.png",
     label: "IN STOCK",
     price: "₹35,333",
     originalPrice: "₹43,244",
@@ -42,12 +40,9 @@ export const products = [
   {
     id: 3,
     images: [
-      "/assets/Giribala_Infinity_Heart_Diamond_Ring_2.jpg",
-      "/assets/Giribala_Infinity_Heart_Diamond_Ring_4.jpg",
-      "/assets/Giribala_Infinity_Heart_Diamond_Ring_3.jpg",
-      "/assets/Giribala_Infinity_Heart_Diamond_Ring_creative.jpg"
+      "/assets/ring2.png",
     ],
-    tryNowImage: "/assets/Giribala.png",
+    tryNowImage: "/assets/ring2.png",
     label: "TRENDING",
     price: "₹41,293",
     originalPrice: "₹42,246",

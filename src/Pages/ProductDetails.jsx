@@ -142,7 +142,7 @@ const ProductDetails = () => {
         </div>
 
         {/* Popup for Virtual Try-On */}
-        {isTryNowOpen && <TryNow onClose={closeTryNow} category={category} image={product.images[0]}/>}
+        {isTryNowOpen && <TryNow onClose={closeTryNow} category={category} image={product.tryNowImage}/>}
 
         {/* Delivery or Instore Pickup Section */}
         <div className="p-4 bg-white rounded-lg shadow-md mt-4">
