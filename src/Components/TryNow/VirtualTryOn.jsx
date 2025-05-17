@@ -386,7 +386,7 @@ const VirtualTryOn = ({ category, image }) => {
             const size = earDistance * 0.28;
 
             const offsetX = 4;
-            const offsetY = 20;
+            const offsetY = 25;
 
             if (isLeftEarVisible) {
               drawHalfImage({
